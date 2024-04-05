@@ -50,12 +50,13 @@ enum MCP2515_BAUD{
 	MCP2515_50KBPS
 };
 
-void MCP2515_init();
+void MCP2515_init(const enum MCP2515_BAUD baudRate, const enum MCP2515_CLK_FREQ MCP_FREQ);
 void MCP2515_reset();
 void MCP2515_writeReg(uint8_t address, uint8_t value);
 uint8_t MCP2515_readReg(uint8_t address);
+uint8_t MCP2515_setBitTimingCustom(uint8_t cnf1_a, uint8_t cnf2_a, uint8_t cnf3_a);
 void MCP2515_bitModify(uint8_t address, uint8_t mask, uint8_t value);
-uint8_t MCP2515_setBitTiming(const enum MCP2515_BAUD, const enum MCP2515_CLK_FREQ);
+uint8_t MCP2515_setBitTiming(const enum MCP2515_BAUD baudRate, const enum MCP2515_CLK_FREQ MCP_FREQ);
 uint8_t MCP2515_getMode();
 void MCP2515_setMode(const enum MCP2515_MODE mode);
 void MCP2515_sendTestMessage();
