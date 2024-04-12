@@ -6,5 +6,7 @@
 
 ..\..\src\spi.c
 
+..\..\src\USART.c
+
 main.c
 

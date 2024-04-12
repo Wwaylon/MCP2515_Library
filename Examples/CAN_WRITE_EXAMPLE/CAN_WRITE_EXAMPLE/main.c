@@ -17,7 +17,6 @@ int main(void)
 	DDRC |= (1<<5);
 
 	MCP2515_init(MCP2515_125KBPS, MCP2515_8MHZ);
-	MCP2515_sendTestMessage();
 	
 	while(1)
 	{
