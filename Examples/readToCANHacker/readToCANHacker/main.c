@@ -1,9 +1,10 @@
 /*
- * CAN_READ_EXAMPLE.c
+ * readToCANHacker.c
  *
- * Created: 4/4/2024 8:01:25 PM
+ * Created: 4/13/2024 10:04:42 PM
  * Author : Waylon
  */ 
+
 #include "config.h"
 #include <avr/io.h>
 #include <stdio.h>
@@ -23,13 +24,15 @@ int main(void)
 		if(MCP2515_receiveMessageStatus() == MSG_RECEIVED)
 		{
 			MCP2515_getMessage(&msg);
-			printf("FRAME:ID=%d:LEN=%d", msg.id, msg.dlc);
-			for (int i = 0; i<msg.dlc; i++ )
+			printf("t");
+			printf("%03x", msg.id);
+			printf("%x", msg.dlc);
+			for (int i = 0; i<msg.dlc; i++)
 			{
-				printf(":");
-				printf("%2x", msg.data[i]);	
+				printf("%02x", msg.data[i]);
 			}
-			printf("\n");
+			printf("\r");
+			
 		}
     }
 	return 0;

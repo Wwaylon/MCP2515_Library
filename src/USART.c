@@ -3,20 +3,19 @@
 #include <stdio.h>
 
 
-//static FILE mystdout = FDEV_SETUP_STREAM(USART_Transmit, NULL, _FDEV_SETUP_WRITE);
 
-static int USART_Transmit(char u8Data, FILE *stream)
+
+int USART_Transmit(char u8Data, FILE *stream)
 {
-	/* Wait for empty transmit buffer */
 	while (!(UCSR0A & (1<<UDRE0)))
 	;
-	/* Put data into buffer, sends the data */
 	UDR0 = u8Data;
 	return 0;
 }
 
 
-static int USART_Receive(FILE *stream)
+
+int USART_Receive(FILE *stream)
 {
 	/* Wait for data to be received */
 	while (!(UCSR0A & (1<<RXC0)))

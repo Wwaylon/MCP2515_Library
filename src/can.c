@@ -180,12 +180,28 @@ void MCP2515_sendTestMessage()
 	SPI_masterTransmit(0xAA);
 	SPI_masterTransmit(0xAA);
 	SPI_masterTransmit(0xAA);
-	
-	
 	SS_high();
-	
 	MCP2515_RTS();
-	
+}
+
+void MCP2515_sendMessage(struct CAN_frame message) 
+{
+	uint8_t TXB0DLC = message.dlc | (message.rtr_bit << 6);
+	SS_low();
+	SPI_masterTransmit(WRITE_INSTRUCTION);
+	SPI_masterTransmit(TXB0CTRL);
+	SPI_masterTransmit(message.priority); //priority 
+	SPI_masterTransmit(message.id>>3); //SIDH
+	SPI_masterTransmit(message.id<<5); //SIDL
+	SPI_masterTransmit(0x00); //EID Filler
+	SPI_masterTransmit(0x00); //EID Filler
+	SPI_masterTransmit(TXB0DLC); //DLC[0-3] RTR at [6]
+	for (int i =0; i<message.dlc; i++)
+	{
+		SPI_masterTransmit(message.data[i]);
+	}
+	SS_high();
+	MCP2515_RTS();
 	
 }
 

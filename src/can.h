@@ -74,9 +74,17 @@ enum RECEIVE_STATUS {
 	MSG_NOT_RECEIVED	
 };
 
+enum MESSAGE_PRIORITY{
+	HIGH_PRIORITY = 0x3,
+	HIGH_INTERMEDIATE_PRIORITY = 0x2,
+	LOW_INTERMEDIATE_PRIORITY = 0x1,
+	LOW_PRIORITY = 0
+};
+
 struct CAN_frame{
 	uint8_t CAN_standard; // 0 for standard; 1 for extended can frames
-	uint32_t id;
+	uint8_t priority;
+	uint16_t id;
 	uint8_t rtr_bit;
 	uint8_t dlc;
 	uint8_t data[8];
@@ -93,9 +101,11 @@ uint8_t MCP2515_setBitTiming(const enum MCP2515_BAUD baudRate, const enum MCP251
 uint8_t MCP2515_getMode();
 void MCP2515_setMode(const enum MCP2515_MODE mode);
 void MCP2515_sendTestMessage();
+void MCP2515_sendMessage();
 void MCP2515_RTS();
 enum RECEIVE_STATUS MCP2515_receiveMessageStatus();
 uint8_t MCP2515_readStatus();
 void MCP2515_getMessage(struct CAN_frame *message);
+void MCP2515_sendMessage(struct CAN_frame message);
 
 #endif /* CAN_H_ */
