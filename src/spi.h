@@ -11,7 +11,7 @@
 #define SCK 5
 #define MISO 4
 #define MOSI 3
-#define SS 2
+#define SS 2 
 
 void SPI_init();
 uint8_t SPI_masterReceive();

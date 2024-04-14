@@ -10,14 +10,15 @@
 #include <util/delay.h>
 #include "can.h"
 #include "spi.h"
+#include <USART.h>
 
 int main(void)
 {
+	USART_init(115200);
 	PRR &= ~(1<<PRSPI);
 	DDRC |= (1<<5);
 
-	MCP2515_init(MCP2515_125KBPS, MCP2515_8MHZ);
-	
+	MCP2515_init(MCP2515_125KBPS, MCP2515_16MHZ);
 	while(1)
 	{
 		MCP2515_sendTestMessage();

@@ -34,7 +34,7 @@ print ("BTLMODE = 1")
 
 for brp in range(1, 50):
         for b in Fbaud:
-                tqall = TQBit(b, TQ(brp, 8000000))
+                tqall = TQBit(b, TQ(brp, 16000000))
                 tq70 = math.floor(tqall * SamplePoint)
                 t_ps1 = tq70 - ( t_syncseg + t_propseg )
                 t_ps2 = tqall - t_ps1  - t_syncseg - t_propseg

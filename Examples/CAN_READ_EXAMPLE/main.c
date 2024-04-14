@@ -9,19 +9,27 @@
 #include <stdio.h>
 #include <util/delay.h>
 #include "USART.h"
+#include "can.h"
 
 
 int main(void)
 {
 	USART_init(115200);
-	
-    /* Replace with your application code */
-	DDRC |= (1<<5);
+	MCP2515_init(MCP2515_500KBPS, MCP2515_16MHZ);
+	MCP2515_bitModify(RXB0CTRL, 0x60, 0x00);
+	struct CAN_frame msg;
     while (1) 
     {
-		printf("Hello World %x\n", 0xA0A0);
-		PORTC ^= (1<<5);
-		_delay_ms(1000);
+		if(MCP2515_receiveMessageStatus() == MSG_RECEIVED)
+		{
+			MCP2515_getMessage(&msg);
+			printf("FRAME:ID=%3x:LEN=%1x:", msg.id, msg.dlc);
+			for (int i = 0; i<msg.dlc; i++ )
+			{
+				printf("%2x", msg.data[i]);	
+			}
+			printf("\n");
+		}
     }
 	return 0;
 }
