@@ -15,11 +15,13 @@ Initializes SPI to some general settings. For more granular control of setting, 
 void SPI_init()
 {
 	//
+	PRR &= ~(1<<PRSPI);
 	//Set SCK, MOSI, SS to output
 	DDRB |= (1<<SCK) | (1<<MOSI) | (1<<SS);
 	PORTB |= (1<<SS);
-	//Enable spi, set as master, set speed to fclk/128
-	SPCR |= (1<<SPE) | (1<<MSTR)  | (1 << SPR0);
+	//Enable spi, set as master, set speed to fclk/16
+	//SPCR |= (1<<SPE) | (1<<MSTR)  | (1 << SPR0);
+	SPCR |= (1<<SPE) | (1<<MSTR)  | (1 << SPI2X);
 }
 
 //SS_low

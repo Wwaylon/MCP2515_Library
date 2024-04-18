@@ -16,7 +16,6 @@ int main(void)
 {
 	USART_init(115200);
 	MCP2515_init(MCP2515_500KBPS, MCP2515_16MHZ);
-	MCP2515_bitModify(RXB0CTRL, 0x60, 0xff);
 	struct CAN_frame msg;
     while (1) 
     {

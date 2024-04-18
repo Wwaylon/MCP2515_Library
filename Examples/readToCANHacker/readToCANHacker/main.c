@@ -1,40 +1,41 @@
-/*
- * readToCANHacker.c
- *
- * Created: 4/13/2024 10:04:42 PM
- * Author : Waylon
- */ 
-
+#include <stdint.h>
 #include "config.h"
 #include <avr/io.h>
-#include <stdio.h>
 #include <util/delay.h>
-#include "USART.h"
-#include "can.h"
+#include <avr/interrupt.h>
+#include "uart_hal.h"
 
 
 int main(void)
 {
-	USART_init(115200);
-	MCP2515_init(MCP2515_500KBPS, MCP2515_16MHZ);
-	MCP2515_bitModify(RXB0CTRL, 0x60, 0xff);
-	struct CAN_frame msg;
-    while (1) 
-    {
-		if(MCP2515_receiveMessageStatus() == MSG_RECEIVED)
-		{
-			MCP2515_getMessage(&msg);
-			printf("t");
-			printf("%03x", msg.id);
-			printf("%x", msg.dlc);
-			for (int i = 0; i<msg.dlc; i++)
-			{
-				printf("%02x", msg.data[i]);
-			}
-			printf("\r");
-			
-		}
-    }
-	return 0;
-}
+	const uint8_t start[] = "Program Start\n\r";
+	uint8_t data = 'A';
+	uint8_t counter = 0x10; //0b00010000
+	
+	DDRD |= 0xF0; //0b11110000
+	uart_init(9600,0);
 
+	sei();
+	uart_send_string(start);
+	char data1[4];
+	int index =0;
+	while (1)
+	{
+		
+		if(uart_read_count() > 0){
+			if(index < 4){
+				data1[index] = uart_read();
+				index++;
+			}
+		}
+		if(index >= 3)
+		{
+			
+			uart_send_byte(data1[0]);
+			uart_send_byte(data1[1]);
+			uart_send_byte(data1[2]);
+			uart_send_byte(data1[3]);
+		}
+
+	}
+}

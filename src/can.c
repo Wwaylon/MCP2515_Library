@@ -57,6 +57,15 @@ void MCP2515_init(const enum MCP2515_BAUD baudRate, const enum MCP2515_CLK_FREQ 
 	MCP2515_reset();
 	MCP2515_setMode(CONFIGURATION_MODE);
 	MCP2515_setBitTiming(baudRate, MCP_FREQ);
+	MCP2515_bitModify(RXB0CTRL, (1<<BUKT), 0xFF); //enable rollover
+	MCP2515_setMask(MASK0, 0x00000000);
+	MCP2515_setMask(MASK1, 0x00000000);
+	MCP2515_setFilter(FILTER0, 0x00000000, 0);
+	MCP2515_setFilter(FILTER1, 0x00000000, 0);
+	MCP2515_setFilter(FILTER2, 0x00000000, 0);
+	MCP2515_setFilter(FILTER3, 0x00000000, 0);
+	MCP2515_setFilter(FILTER4, 0x00000000, 0);
+	MCP2515_setFilter(FILTER5, 0x00000000, 0);
 	MCP2515_setMode(NORMAL_MODE);
 }
 
@@ -237,11 +246,93 @@ uint8_t MCP2515_readStatus()
 
 void MCP2515_getMessage(struct CAN_frame *message)
 {
+	uint8_t status = MCP2515_readStatus();
 	uint8_t buffer[8];
-	MCP2515_readRegs(RXB0SIDH, buffer, 5);
-	message->id = 0x0000 | (buffer[0]<<3) | (buffer[1]>>5);
-	message->dlc = buffer[4] & (0x0f);
-	message->rtr_bit = buffer[4] & (1<<6);
-	MCP2515_readRegs(RXB0D, message->data, message->dlc);
-	MCP2515_bitModify(CANINTF, (1<<RX0IF), 0x00);
+	//printf("%x\n", MCP2515_readReg(CANINTF));
+	if(status & (1<<RX0IF))
+	{
+		MCP2515_readRegs(RXB0SIDH, buffer, 5);
+		message->id = 0x0000 | (buffer[0]<<3) | (buffer[1]>>5);
+		message->dlc = buffer[4] & (0x0f);
+		message->rtr_bit = buffer[4] & (1<<6);
+		MCP2515_readRegs(RXB0D, message->data, message->dlc);
+		MCP2515_bitModify(CANINTF, (1<<RX0IF)|(1<<RX1IF), 0x00);
+	}
+	else if (status & (1<<RX1IF))
+	{
+		MCP2515_readRegs(RXB1SIDH, buffer, 5);
+		message->id = 0x0000 | (buffer[0]<<3) | (buffer[1]>>5);
+		message->dlc = buffer[4] & (0x0f);
+		message->rtr_bit = buffer[4] & (1<<6);
+		MCP2515_readRegs(RXB1D, message->data, message->dlc);
+		MCP2515_bitModify(CANINTF, (1<<RX0IF)|(1<<RX1IF), 0x00);
+		PORTC |= (1<<5);
+	}
+}
+
+void MCP2515_setFilter(enum FILTER_ID filter, uint32_t filter_value, uint8_t extended)
+{
+	if (MCP2515_getMode() != CONFIGURATION_MODE)
+	{
+		MCP2515_setMode(CONFIGURATION_MODE);
+	}
+	uint8_t reg_base;
+	switch(filter)
+	{
+		case FILTER0:
+		reg_base = 0x00;
+		break;
+		case FILTER1:
+		reg_base = 0x04;
+		break;
+		case FILTER2:
+		reg_base = 0x08;
+		break;
+		case FILTER3:
+		reg_base = 0x10;
+		break;
+		case FILTER4:
+		reg_base = 0x14;
+		break;
+		case FILTER5:
+		reg_base = 0x18;
+		break;
+		default:
+		reg_base = 0x00;
+		break;
+	}
+	MCP2515_writeReg(reg_base, (uint8_t)(filter_value>>3));
+	if (extended)
+	{MCP2515_writeReg(reg_base+1, (uint8_t)((filter_value<<5) | (filter_value >> 27) | (1<<EXIDE)));}
+	else
+	{MCP2515_writeReg(reg_base+1, (uint8_t)((filter_value<<5) | (filter_value >> 27)));}
+	MCP2515_writeReg(reg_base+2, (uint8_t)((filter_value) >> 19));
+	MCP2515_writeReg(reg_base+3, (uint8_t)((filter_value) >> 11));
+}
+
+void MCP2515_setMask(enum MASK_ID mask, uint32_t mask_value)
+{
+	if (MCP2515_getMode() != CONFIGURATION_MODE)
+	{
+		MCP2515_setMode(CONFIGURATION_MODE);
+	}
+	if(mask == MASK0)
+	{
+		MCP2515_writeReg(RXM0SIDH, (uint8_t)(mask_value>>3));
+		MCP2515_writeReg(RXM0SIDL, (uint8_t)((mask_value<<5) | (mask_value >> 27)));
+		MCP2515_writeReg(RXM0EID8, (uint8_t)((mask_value) >> 19));
+		MCP2515_writeReg(RXM0EID0, (uint8_t)((mask_value) >> 11));	
+	}
+	if(mask == MASK1)
+	{
+		MCP2515_writeReg(RXM1SIDH, (uint8_t)(mask_value>>3));
+		MCP2515_writeReg(RXM1SIDL, (uint8_t)((mask_value<<5) | (mask_value >> 27)));
+		MCP2515_writeReg(RXM1EID8, (uint8_t)((mask_value) >> 19));
+		MCP2515_writeReg(RXM1EID0, (uint8_t)((mask_value) >> 11));
+	}
+}
+
+void MCP2515_enableInterrupt()
+{
+	MCP2515_bitModify(CANINTE, 0x03, (1<<RX0IE) | (1<<RX1IE));
 }

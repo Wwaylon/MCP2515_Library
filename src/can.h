@@ -29,6 +29,16 @@
 #define RTS_TXB1 0x82
 #define RTS_TXB2 0x84
 
+#define CANINTE 0x2B
+#define MERRE 0x7
+#define WAKIE 0x6
+#define ERRIE 0x5
+#define TX2IE 0x4
+#define TX1IE 0x3
+#define TX0IE 0x2
+#define RX1IE 0x1
+#define RX0IE 0x0
+
 #define CANINTF 0x2C
 #define RX0IF 0
 #define RX1IF 1
@@ -46,6 +56,50 @@
 #define RXB1DLC 0x75
 #define RXB0D 0x66
 #define RXB1D 0x76
+
+#define RXF0SIDH 0x00
+#define RXF1SIDH 0x04
+#define RXF2SIDH 0x08
+#define RXF3SIDH 0x10
+#define RXF4SIDH 0x14
+#define RXF5SIDH 0x18
+
+#define RXF0SIDL 0x01
+#define RXF1SIDL 0x05
+#define RXF2SIDL 0x09
+#define RXF3SIDL 0x11
+#define RXF4SIDL 0x15
+#define RXF5SIDL 0x19
+
+#define RXF0EDI8 0x02
+#define RXF1EDI8 0x06
+#define RXF2EDI8 0x0A
+#define RXF3EDI8 0x12
+#define RXF4EDI8 0x16
+#define RXF5EDI8 0x1A
+
+#define RXF0EID0 0x03
+#define RXF1EID0 0x07
+#define RXF2EID0 0x0B
+#define RXF3EID0 0x13
+#define RXF4EID0 0x17
+#define RXF5EID0 0x1B
+
+#define RXM0SIDH 0x20
+#define RXM1SIDH 0x24
+
+#define RXM0SIDL 0x21
+#define RXM1SIDL 0x25
+
+#define RXM0EID8 0x22
+#define RXM1EID8 0x26
+
+#define RXM0EID0 0x23
+#define RXM1EID0 0x27
+
+#define BUKT 2
+#define BUKT1 1
+#define EXIDE 3
 
 enum MCP2515_MODE {	
 	NORMAL_MODE = 0x0,
@@ -81,6 +135,20 @@ enum MESSAGE_PRIORITY{
 	LOW_PRIORITY = 0
 };
 
+enum MASK_ID{
+	MASK0,
+	MASK1
+};
+
+enum FILTER_ID{
+	FILTER0,
+	FILTER1,
+	FILTER2,
+	FILTER3,
+	FILTER4,
+	FILTER5,
+};
+
 struct CAN_frame{
 	uint8_t CAN_standard; // 0 for standard; 1 for extended can frames
 	uint8_t priority;
@@ -107,5 +175,9 @@ enum RECEIVE_STATUS MCP2515_receiveMessageStatus();
 uint8_t MCP2515_readStatus();
 void MCP2515_getMessage(struct CAN_frame *message);
 void MCP2515_sendMessage(struct CAN_frame message);
+void MCP2515_setFilter(enum FILTER_ID filter, uint32_t filter_value, uint8_t extended);
+void MCP2515_setMask(enum MASK_ID mask, uint32_t mask_value);
+void MCP2515_enableInterrupt();
+
 
 #endif /* CAN_H_ */
