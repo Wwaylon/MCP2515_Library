@@ -22,47 +22,57 @@
 #define CMD_v 'v'
 #define CMD_Z 'Z'
 
-int connected = 0;
+volatile int connected = 0;
 
 // Function prototypes
-void handle_CAN_command(uint8_t command);
+void handle_CAN_command(uint8_t command[], uint8_t length);
 void handle_CAN_data(uint8_t* data, uint8_t length);
 
 int main(void) {
-	USART_init_57600();
-	sei(); // Enable global interrupts
+	USART_init_115200();
 	struct CAN_frame msg;
-
+	uint8_t command[100];
+	uint8_t length =0;
+	USART_flush();
 	while (1) {
-		// Wait for data to be received
-		while (!(UCSR0A & (1 << RXC0)))
+		if(connected && MCP2515_receiveMessageStatus() == MSG_RECEIVED)
 		{
-			//in the mean time if connected receive can messages
-			if(connected && MCP2515_receiveMessageStatus() == MSG_RECEIVED)
-			{
-				MCP2515_getMessage(&msg);
-				printf("t%03X%01X", msg.id, msg.dlc);
-				for (int i = 0; i < msg.dlc; ++i) {
-					printf("%02X", msg.data[i]);
+			MCP2515_getMessage(&msg);
+			printf("t%03X%01X", msg.id, msg.dlc);
+			for (int i = 0; i < msg.dlc; ++i) {
+				printf("%02X", msg.data[i]);
+			}
+			printf("\r");
+		}
+		while ((UCSR0A & (1 << RXC0)))
+		{
+			uint8_t data = UDR0;
+			if (data == '\r' || data == '\n') {
+				// Process the command if it's not empty
+				if (length > 0) {
+					command[length] = '\0';
+					handle_CAN_command(command, length);
+					length = 0;
 				}
-				printf("\r");
+				} else {
+				// Store character in command buffer if within limits
+				if (length < sizeof(command)) {
+					command[length++] = data;
+				}
 			}
 		}
-
-		uint8_t received = UDR0;
-		handle_CAN_command(received);
 	}
 }
 
-void handle_CAN_command(uint8_t command) {
-	switch (command) {
+void handle_CAN_command(uint8_t command[], uint8_t length) {
+	switch (command[0]) {
 		case CMD_O:
 		MCP2515_init(MCP2515_500KBPS, MCP2515_16MHZ);
 		connected =1;
 		printf("\r");
 		break;
 		case CMD_C:
-		// Switch CAN controller to reset mode
+		connected =0;
 		printf("\r");
 		break;
 		case CMD_L:
@@ -107,7 +117,7 @@ void handle_CAN_command(uint8_t command) {
 		break;
 		case CMD_v:
 		// Read detailed firmware version
-		printf("v0101\r"); // Example detailed version
+		printf("V0101\r"); // Example detailed version
 		break;
 		case CMD_Z:
 		// Toggle the timestamp setting for receiving frames
