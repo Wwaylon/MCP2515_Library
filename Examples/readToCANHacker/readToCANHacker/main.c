@@ -157,8 +157,3 @@ void handle_CAN_command(uint8_t command[], uint8_t length) {
 		break;
 	}
 }
-
-// Function to handle additional data received after a command
-void handle_CAN_data(uint8_t* data, uint8_t length) {
-	// Process data based on current state or command received
-}
