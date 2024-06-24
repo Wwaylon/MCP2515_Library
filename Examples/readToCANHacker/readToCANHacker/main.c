@@ -1,5 +1,7 @@
 #include "config.h"
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
@@ -67,16 +69,19 @@ int main(void) {
 void handle_CAN_command(uint8_t command[], uint8_t length) {
 	switch (command[0]) {
 		case CMD_O:
+		// Open Connection
 		MCP2515_init(MCP2515_500KBPS, MCP2515_16MHZ);
 		connected =1;
 		printf("\r");
 		break;
 		case CMD_C:
+		// Close connection
 		connected =0;
 		printf("\r");
 		break;
-		case CMD_L:
+		case CMD_L: 
 		// Switch CAN controller to Listen Only mode
+		MCP2515_setMode(LISTEN_ONLY_MODE);
 		printf("\r");
 		break;
 		case CMD_M:
@@ -104,6 +109,29 @@ void handle_CAN_command(uint8_t command[], uint8_t length) {
 		printf("\r");
 		break;
 		case CMD_t:
+		if (connected && length >= 7) {
+			struct CAN_frame message;
+			char id_str[4] = {0}; // To store the ID part as a string
+			char dlc_str[2] = {0}; // To store the DLC part as a string
+
+			// Copy the ID part (3 characters) and DLC part (1 character)
+			strncpy(id_str, (char *)&command[1], 3);
+			strncpy(dlc_str, (char *)&command[4], 1);
+
+			// Convert ID and DLC from hexadecimal string to integer
+			message.id = (uint16_t)strtol(id_str, NULL, 16);
+			message.dlc = (uint8_t)strtol(dlc_str, NULL, 16);
+
+			// Parse the data bytes
+			for (int i = 0; i < message.dlc; ++i) {
+				char byte_str[3] = {0}; // To store each byte as a string
+				strncpy(byte_str, (char *)&command[5 + 2 * i], 2);
+				message.data[i] = (uint8_t)strtol(byte_str, NULL, 16);
+			}
+			message.rtr_bit = 0;
+			message.priority=HIGH_PRIORITY;
+			MCP2515_sendMessage(message);
+		}
 		// Transmit standard 11-bit CAN frame
 		printf("\r");
 		break;
