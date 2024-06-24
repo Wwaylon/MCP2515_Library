@@ -3,7 +3,8 @@
 #define USART_H_
 #include <stdio.h>
 
-void USART_init();
+void USART_init_57600();
+void USART_init_115200();
 int USART_Transmit(char u8Data, FILE *stream);
 int USART_Receive(FILE *stream);
 void UART_getLine(char* buf, uint8_t n);

@@ -1,41 +1,126 @@
-#include <stdint.h>
 #include "config.h"
+#include <stdint.h>
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
-#include "uart_hal.h"
+#include "USART.h"
+#include "can.h"
 
+// CAN command constants
+#define CMD_O 'O'
+#define CMD_C 'C'
+#define CMD_L 'L'
+#define CMD_M 'M'
+#define CMD_m 'm'
+#define CMD_N 'N'
+#define CMD_r 'r'
+#define CMD_R 'R'
+#define CMD_S 'S'
+#define CMD_t 't'
+#define CMD_T 'T'
+#define CMD_V 'V'
+#define CMD_v 'v'
+#define CMD_Z 'Z'
 
-int main(void)
-{
-	const uint8_t start[] = "Program Start\n\r";
-	uint8_t data = 'A';
-	uint8_t counter = 0x10; //0b00010000
-	
-	DDRD |= 0xF0; //0b11110000
-	uart_init(9600,0);
+int connected = 0;
 
-	sei();
-	uart_send_string(start);
-	char data1[4];
-	int index =0;
-	while (1)
-	{
-		
-		if(uart_read_count() > 0){
-			if(index < 4){
-				data1[index] = uart_read();
-				index++;
+// Function prototypes
+void handle_CAN_command(uint8_t command);
+void handle_CAN_data(uint8_t* data, uint8_t length);
+
+int main(void) {
+	USART_init_57600();
+	sei(); // Enable global interrupts
+	struct CAN_frame msg;
+
+	while (1) {
+		// Wait for data to be received
+		while (!(UCSR0A & (1 << RXC0)))
+		{
+			//in the mean time if connected receive can messages
+			if(connected && MCP2515_receiveMessageStatus() == MSG_RECEIVED)
+			{
+				MCP2515_getMessage(&msg);
+				printf("t%03X%01X", msg.id, msg.dlc);
+				for (int i = 0; i < msg.dlc; ++i) {
+					printf("%02X", msg.data[i]);
+				}
+				printf("\r");
 			}
 		}
-		if(index >= 3)
-		{
-			
-			uart_send_byte(data1[0]);
-			uart_send_byte(data1[1]);
-			uart_send_byte(data1[2]);
-			uart_send_byte(data1[3]);
-		}
 
+		uint8_t received = UDR0;
+		handle_CAN_command(received);
 	}
+}
+
+void handle_CAN_command(uint8_t command) {
+	switch (command) {
+		case CMD_O:
+		MCP2515_init(MCP2515_500KBPS, MCP2515_16MHZ);
+		connected =1;
+		printf("\r");
+		break;
+		case CMD_C:
+		// Switch CAN controller to reset mode
+		printf("\r");
+		break;
+		case CMD_L:
+		// Switch CAN controller to Listen Only mode
+		printf("\r");
+		break;
+		case CMD_M:
+		// Set acceptance code (next bytes expected)
+		printf("\r");
+		break;
+		case CMD_m:
+		// Set acceptance mask (next bytes expected)
+		printf("\r");
+		break;
+		case CMD_N:
+		// Read serial number from device
+		printf("N1234\r"); // Example serial number
+		break;
+		case CMD_r:
+		// Transmit standard remote 11-bit CAN frame
+		printf("\r");
+		break;
+		case CMD_R:
+		// Transmit extended remote 29-bit CAN frame
+		printf("\r");
+		break;
+		case CMD_S:
+		// Set CAN controller to a predefined standard bit rate
+		printf("\r");
+		break;
+		case CMD_t:
+		// Transmit standard 11-bit CAN frame
+		printf("\r");
+		break;
+		case CMD_T:
+		// Transmit extended 29-bit CAN frame
+		printf("\r");
+		break;
+		case CMD_V:
+		// Read hardware and firmware version
+		printf("V0102\r"); // Example version
+		break;
+		case CMD_v:
+		// Read detailed firmware version
+		printf("v0101\r"); // Example detailed version
+		break;
+		case CMD_Z:
+		// Toggle the timestamp setting for receiving frames
+		printf("\r");
+		break;
+		default:
+		// Unknown command
+		printf("\r");
+		break;
+	}
+}
+
+// Function to handle additional data received after a command
+void handle_CAN_data(uint8_t* data, uint8_t length) {
+	// Process data based on current state or command received
 }

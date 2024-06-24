@@ -14,7 +14,7 @@
 
 int main(void)
 {
-	USART_init(115200);
+	USART_init_57600();
 	MCP2515_init(MCP2515_500KBPS, MCP2515_16MHZ);
 	struct CAN_frame msg;
     while (1) 

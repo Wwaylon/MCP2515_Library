@@ -14,8 +14,6 @@
 
 int main(void)
 {
-	USART_init(115200);
-	PRR &= ~(1<<PRSPI);
 	DDRC |= (1<<5);
 	struct CAN_frame message = {0, HIGH_PRIORITY, 0x045, 0x0, 8, {0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA }};
 

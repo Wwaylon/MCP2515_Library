@@ -12,20 +12,53 @@
 #include "USART.h"
 #include "can.h"
 
-int flag =0;
-struct CAN_frame msg;
-uint8_t buffer[8];
+#define BUFFER_SIZE 10
+
+struct CircularBuffer
+{
+	struct CAN_frame buffer[BUFFER_SIZE];
+	volatile uint8_t head;
+	volatile uint8_t tail;
+};
+
+struct CircularBuffer cb; 
 
 ISR(INT0_vect)
 {
-	flag=1;
-	
+	// Write CAN message into buffer
+	 MCP2515_getMessage(&cb.buffer[cb.head]);
+	cb.head = (cb.head + 1) % BUFFER_SIZE; // Increment head circularly
+	if (cb.head == cb.tail)
+	{
+		// Buffer is full, move tail to overwrite oldest message
+		cb.tail = (cb.tail + 1) % BUFFER_SIZE;
+	}
 }
 
 
+void bufferInit()
+{
+	cb.head = 0;
+	cb.tail = 0;
+}
+
+struct CAN_frame *bufferRead()
+{
+	if (cb.head == cb.tail) // Check if buffer is empty
+	{
+		return NULL;
+	}
+	else
+	{
+		struct CAN_frame *message = &cb.buffer[cb.tail];
+		cb.tail = (cb.tail + 1) % BUFFER_SIZE; // Increment tail circularly
+		return message;
+	}
+}
+
 int main(void)
 {
-	USART_init();
+	USART_init_57600();
 	MCP2515_init(MCP2515_500KBPS, MCP2515_16MHZ);
 	MCP2515_enableInterrupt();
 	DDRD &= ~(1 << 2);
@@ -35,22 +68,20 @@ int main(void)
 	EIMSK |= (1<<INT0);
 	sei();
 	
-	DDRC |= (1<<5);
-	struct CAN_frame message;
-    while (1) 
+	bufferInit();
+	struct CAN_frame *message;
+    while (1)
     {
-		if (flag)
-		{
-			flag =0;
-			MCP2515_getMessage(&message);
-			printf("t%x:%x", message.id, message.dlc);
-			for (int i =0; i < message.dlc; i++)
-			{
-				printf(":%x", message.data[i]);
-			}
-			printf("\n");
-		}
-
+	    message = bufferRead();
+	    if (message != NULL)
+	    {
+		    printf("t%x:%x", message->id, message->dlc);
+		    for (int i = 0; i < message->dlc; i++)
+		    {
+			    printf(":%x", message->data[i]);
+		    }
+		    printf("\n");
+	    }
     }
 }
 

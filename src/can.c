@@ -256,7 +256,7 @@ void MCP2515_getMessage(struct CAN_frame *message)
 		message->dlc = buffer[4] & (0x0f);
 		message->rtr_bit = buffer[4] & (1<<6);
 		MCP2515_readRegs(RXB0D, message->data, message->dlc);
-		MCP2515_bitModify(CANINTF, (1<<RX0IF)|(1<<RX1IF), 0x00);
+		MCP2515_bitModify(CANINTF, (1<<RX0IF), 0x00);
 	}
 	else if (status & (1<<RX1IF))
 	{
@@ -265,8 +265,7 @@ void MCP2515_getMessage(struct CAN_frame *message)
 		message->dlc = buffer[4] & (0x0f);
 		message->rtr_bit = buffer[4] & (1<<6);
 		MCP2515_readRegs(RXB1D, message->data, message->dlc);
-		MCP2515_bitModify(CANINTF, (1<<RX0IF)|(1<<RX1IF), 0x00);
-		PORTC |= (1<<5);
+		MCP2515_bitModify(CANINTF, (1<<RX1IF), 0x00);
 	}
 }
 
@@ -303,9 +302,13 @@ void MCP2515_setFilter(enum FILTER_ID filter, uint32_t filter_value, uint8_t ext
 	}
 	MCP2515_writeReg(reg_base, (uint8_t)(filter_value>>3));
 	if (extended)
-	{MCP2515_writeReg(reg_base+1, (uint8_t)((filter_value<<5) | (filter_value >> 27) | (1<<EXIDE)));}
+	{
+		MCP2515_writeReg(reg_base+1, (uint8_t)((filter_value<<5) | (filter_value >> 27) | (1<<EXIDE)));
+	}
 	else
-	{MCP2515_writeReg(reg_base+1, (uint8_t)((filter_value<<5) | (filter_value >> 27)));}
+	{
+		MCP2515_writeReg(reg_base+1, (uint8_t)((filter_value<<5) | (filter_value >> 27)));
+	}
 	MCP2515_writeReg(reg_base+2, (uint8_t)((filter_value) >> 19));
 	MCP2515_writeReg(reg_base+3, (uint8_t)((filter_value) >> 11));
 }
