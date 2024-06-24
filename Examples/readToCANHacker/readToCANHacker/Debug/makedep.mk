@@ -10,5 +10,3 @@
 
 main.c
 
-uart_hal.c
-
