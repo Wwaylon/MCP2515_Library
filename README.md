@@ -5,6 +5,7 @@ In this repository is example projects that show different uses for the driver. 
 Note the functionality with CAN Hacker is incomplete and can only do the following:
 - Read and record can messages
 - Send CAN messages
+
 Any other functionality must be added by implementing the full Lawicel protocol used by CAN Hacker.
 
 ## Purpose
